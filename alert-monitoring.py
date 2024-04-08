@@ -1,18 +1,24 @@
-
-
 import mariadb
 import math
 from multiprocessing import Process
 from multiprocessing import Manager
 import time
 import smtplib, ssl
+import io
+from email.encoders import encode_base64
 from email.message import EmailMessage
 from email.mime.image import MIMEImage
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
+from email.utils import make_msgid
+import mimetypes
 from datetime import datetime
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from matplotlib.patches import Circle
 
 
 
@@ -68,57 +74,161 @@ def monitor_station(station_name, return_dict):
         windAlert.append(False)
     conn.close()
 
-    if checkRain(rainRate) and True not in rainAlert and (datetime.now() - dt).total_seconds() < 600:
-        port = 465
-        password = "zgdf emij huka kkgf"
-
-        context = ssl.create_default_context()
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-            server.login("allurations@gmail.com", password)
-
-            sender_email = "allurations@gmail.com"
-            receiver_email = "sirswagger21@gmail.com"
-            message = """\
-            Subject: Hi there
-
-            The UMD campus is experiencing heavy rain. This could lead to flash flooding. Please exercise caution if going outside."""
-            server.sendmail(sender_email, receiver_email, message)
-        
-        rainAlert[-1] = True
-
-
-    if checkWind(windGust) and True not in rainAlert and (datetime.now() - dt).total_seconds() < 600:
-        port = 465
-        password = "Email password here"
-
-        context = ssl.create_default_context()
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-            server.login("gmail name (e.g. hello@gmail.com)", password)
-
-            sender_email = "my@gmail.com"
-            receiver_email = "your@gmail.com"
-            message = """\
-            Subject: Hi there
-
-            The UMD campus is experiencing strong winds. Please exercise caution if going outside."""
-            server.sendmail(sender_email, receiver_email, message)
-        
-        windAlert[-1] = True
-
-
-
     print('{} Rain Rate Alert: {}'.format(station_name, checkRain(rainRate)))
     print('{} Wind Alert: {}'.format(station_name,checkWind(windGust)))
-    return_dict[station_name] = [line[0], line[1], line[2], rainAlert[-1], windAlert[-1]]
+    return_dict[station_name] = [line[0], line[1], line[2], rainAlert, windAlert]
     #return_dict will contain an array [datetime, rainRate at that dt, windGust at that dt, rainAlert at that dt, windAlert at that dt]
+
+def createGraphic(rain, wind):
+    img = mpimg.imread('cmcm.jpg')
+    imgplot = plt.imshow(img)
+    
+
+    plt.gca().add_patch(plt.Circle((0, 0), 0, color='lightgreen'))
+    plt.gca().add_patch(plt.Circle((0, 0), 0, color='r'))
+    plt.gca().add_patch(plt.Circle((0, 0), 0, color='b'))
+
+    colors = []
+    for i in range(0, len(rain)):
+        if rain[i] == False and wind[i] == False:
+            colors.append('springgreen')
+        elif rain[i] == True and wind[i] == False:
+            colors.append('lightblue')
+        elif rain[i] == False and wind[i] == True:
+            colors.append('lightcoral')
+        #TBD: when both rain AND wind are triggered
+
+
+    #atlantic
+    j = 0
+    plt.gca().add_patch(plt.Circle((920, 590), 40, facecolor=colors[j], edgecolor='black'))
+    t1 = plt.text(920, 540, "Atlantic Building", fontweight='extra bold', fontsize=10, ha='center')
+    t1.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
+
+    #williams
+    j = 1
+    plt.gca().add_patch(plt.Circle((1390, 610), 40, facecolor=colors[j], edgecolor='black'))
+    t2 = plt.text(1390, 560, "AV Williams Building", fontweight='extra bold', fontsize=10, ha='center')
+    t2.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
+
+    #golf
+    j = 2
+    plt.gca().add_patch(plt.Circle((50, 630), 40, facecolor=colors[j], edgecolor='black'))
+    t3 = plt.text(70, 590, "Golf Course", fontweight='extra bold', fontsize=10)
+    t3.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
+
+    #vmh
+    j = 3
+    plt.gca().add_patch(plt.Circle((620, 1340), 40, facecolor=colors[j], edgecolor='black'))
+    t4 = plt.text(620, 1290, "Van Munching Hall", fontweight='extra bold', fontsize=10, ha='center')
+    t4.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
+
+    #chem
+    j = 4
+    plt.gca().add_patch(plt.Circle((1150, 730), 40, facecolor=colors[j], edgecolor='black'))
+    t5 = plt.text(1150, 680, "Chemistry Building", fontweight='extra bold', fontsize=10, ha='center')
+    t5.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
+    
+    plt.legend(["No recent alerts", "Recent rain alert", "Recent wind alert"], fontsize=10)
+
+    fig = plt.gcf()
+    fig.set_size_inches(8, 8)
+    plt.savefig('test.png', bbox_inches='tight')
+    return 0
+
+def generateEmail(rain, wind):
+    k = 0
+    if True in rain and True not in wind:
+        k = 0
+    elif True in wind and True not in rain:
+        k = 1
+    elif True in rain and True in wind:
+        k = 2
+    else:
+        return 0
+    
+    port = 465
+    password = "zgdf emij huka kkgf"
+    context = ssl.create_default_context()
+    sender_email = "allurations@gmail.com"
+    receiver_email = ["sirswagger21@gmail.com", "Jasony2025@gmail.com"]
+
+    subjectMessages = ["Rain Alert: Exercise Caution", "Wind Alert: Exercise Caution", "Rain and Wind Alert: Exercise Caution"]
+    subject = subjectMessages[k]
+
+    message = EmailMessage()
+    message['Subject'] = subject
+    message['From'] = sender_email
+    message['To'] = ", ".join(receiver_email)
+    message.set_content("")
+
+    bodyMessages = [
+        """\
+        <html>
+            <body>
+                <p style="font-size:18px;">
+                Hello, <br> <br>
+                The UMD campus is currently experiencing heavy rain. This could lead to flash flooding. Please exercise caution if going outside. <br> <br>
+                Sincerely, <br>
+                Mesoterps
+                </p>
+                <p style="font-size:9px;">
+                DISCLAIMER: This is an UNOFFICIAL alert from students at the Department of Atmospheric and Oceanic Science. For official guidance, please consult the National Weather Service.
+                </p>
+                <img src="cid:{image_cid}">
+            </body>
+        </html>
+        """,
+        """\
+        <html>
+            <body>
+                <p style="font-size:18px;">
+                Hello, <br> <br>
+                The UMD campus is currently experiencing strong winds. This could lead to downed trees and wind damages. Please exercise caution if going outside. <br> <br>
+                Sincerely, <br>
+                Mesoterps
+                </p>
+                <p style="font-size:9px;">
+                DISCLAIMER: This is an UNOFFICIAL alert from students at the Department of Atmospheric and Oceanic Science. For official guidance, please consult the National Weather Service.
+                </p>
+                <img src="cid:{image_cid}">
+            </body>
+        </html>
+        """,
+        """\
+        <html>
+            <body>
+                <p style="font-size:18px;">
+                Hello, <br> <br>
+                The UMD campus is currently experiencing heavy rain and strong winds. This could lead to flash flooding, wind damages, and very low visibility. Please exercise caution if going outside. <br> <br>
+                Sincerely, <br>
+                Mesoterps
+                </p>
+                <p style="font-size:9px;">
+                DISCLAIMER: This is an UNOFFICIAL alert from students at the Department of Atmospheric and Oceanic Science. For official guidance, please consult the National Weather Service.
+                </p>
+                <img src="cid:{image_cid}">
+            </body>
+        </html>
+        """
+    ]
+    image_cid = make_msgid(domain='weather.umd.edu')
+    message.add_alternative(
+    bodyMessages[k].format(image_cid=image_cid[1:-1]), subtype='html')
+    with open('test.png', 'rb') as img:
+        maintype, subtype = mimetypes.guess_type(img.name)[0].split('/')
+        message.get_payload()[1].add_related(img.read(), maintype=maintype, subtype=subtype, cid=image_cid)
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
 
 def main():
     #Spawn child processes to monitor each station over a set time interval
     #Wait for them to check if the alert should be triggered, reap the children, then sleep and repeat
 
-    station_list = ['mesoterp7DB', 'mesoterp8DB', 'mesoterp9DB']
+    station_list = ['mesoterp7DB', 'mesoterp8DB', 'mesoterp9DB', 'mesoterp1DB', 'mesoterp3DB']
+    #atlantic, williams, golf, vmh, chemistry
     while(True):
         manager = Manager()
         return_dict = manager.dict()
@@ -131,10 +241,24 @@ def main():
         for proc in jobs:
             proc.join()
         
-        img = mpimg.imread('cmcm.jpg')
-        imgplot = plt.imshow(img)
-        plt.show()
-        print(return_dict.values())
+        r = return_dict.values()
+        rainArray = []
+        windArray = []
+        for i in range(0, len(r)):
+            rain = False
+            wind = False
+            if True in r[i][3]:
+                rain = True
+            if True in r[i][4]:
+                wind = True
+            rainArray.append(rain)
+            windArray.append(wind)
+
+        createGraphic(rain, wind)
+        generateEmail(rain, wind)
+
+            
+
         print('Finished Monitoring')
 
         #send report
