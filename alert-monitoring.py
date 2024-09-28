@@ -80,58 +80,73 @@ def monitor_station(station_name, return_dict):
     #return_dict will contain an array [datetime, rainRate at that dt, windGust at that dt, rainAlert at that dt, windAlert at that dt]
 
 def createGraphic(rain, wind):
+    fig, ax = plt.subplots()
+    ax.patch.set_alpha(0)
+
+    rain = [True, True, False, True, False]
+    wind = [False, False, False, True, True]
     img = mpimg.imread('cmcm.jpg')
-    imgplot = plt.imshow(img)
+    imgplot = ax.imshow(img)
+    rainPicture = mpimg.imread('rainNew3.png')
+    windPicture = mpimg.imread('windNew.png')
+    neutralPicture = mpimg.imread('neutralNew6.png')
+    bothPicture = mpimg.imread('bothNew.png')
     
 
-    plt.gca().add_patch(plt.Circle((0, 0), 0, color='lightgreen'))
-    plt.gca().add_patch(plt.Circle((0, 0), 0, color='r'))
-    plt.gca().add_patch(plt.Circle((0, 0), 0, color='b'))
+    # ax.add_patch(plt.Circle((0, 0), 0, color='springgreen'))
+    # ax.add_patch(plt.Circle((0, 0), 0, color='lightcoral'))
+    # ax.add_patch(plt.Circle((0, 0), 0, color='lightblue'))
 
     colors = []
+    pictures = []
     for i in range(0, len(rain)):
         if rain[i] == False and wind[i] == False:
             colors.append('springgreen')
+            pictures.append(neutralPicture)
         elif rain[i] == True and wind[i] == False:
             colors.append('lightblue')
+            pictures.append(rainPicture)
         elif rain[i] == False and wind[i] == True:
             colors.append('lightcoral')
-        #TBD: when both rain AND wind are triggered
+            pictures.append(windPicture)
+        else:
+            colors.append('lavender')
+            pictures.append(bothPicture)
 
 
     #atlantic
     j = 0
-    plt.gca().add_patch(plt.Circle((920, 590), 40, facecolor=colors[j], edgecolor='black'))
-    t1 = plt.text(920, 540, "Atlantic Building", fontweight='extra bold', fontsize=10, ha='center')
+    fig.figimage(pictures[j], 423, 433) #atlantic
+    t1 = ax.text(920, 540, "Atlantic Building", fontweight='extra bold', fontsize=10, ha='center')
     t1.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
 
     #williams
     j = 1
-    plt.gca().add_patch(plt.Circle((1390, 610), 40, facecolor=colors[j], edgecolor='black'))
-    t2 = plt.text(1390, 560, "AV Williams Building", fontweight='extra bold', fontsize=10, ha='center')
+    fig.figimage(pictures[j], 605, 425) #av williams
+    t2 = ax.text(1390, 560, "AV Williams Building", fontweight='extra bold', fontsize=10, ha='center')
     t2.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
 
     #golf
     j = 2
-    plt.gca().add_patch(plt.Circle((50, 630), 40, facecolor=colors[j], edgecolor='black'))
-    t3 = plt.text(70, 590, "Golf Course", fontweight='extra bold', fontsize=10)
+    fig.figimage(pictures[j], 100, 410) #golf
+    t3 = ax.text(70, 605, "Golf Course", fontweight='extra bold', fontsize=10)
     t3.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
 
     #vmh
     j = 3
-    plt.gca().add_patch(plt.Circle((620, 1340), 40, facecolor=colors[j], edgecolor='black'))
-    t4 = plt.text(620, 1290, "Van Munching Hall", fontweight='extra bold', fontsize=10, ha='center')
+    fig.figimage(pictures[j], 308, 140) #vmh
+    t4 = ax.text(620, 1290, "Van Munching Hall", fontweight='extra bold', fontsize=10, ha='center')
     t4.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
 
     #chem
     j = 4
-    plt.gca().add_patch(plt.Circle((1150, 730), 40, facecolor=colors[j], edgecolor='black'))
-    t5 = plt.text(1150, 680, "Chemistry Building", fontweight='extra bold', fontsize=10, ha='center')
+    fig.figimage(pictures[j], 510, 375) #chem
+    t5 = ax.text(1150, 680, "Chemistry Building", fontweight='extra bold', fontsize=10, ha='center')
     t5.set_bbox(dict(facecolor=colors[j], alpha=1, edgecolor='black'))
-    
-    plt.legend(["No recent alerts", "Recent rain alert", "Recent wind alert"], fontsize=10)
 
-    fig = plt.gcf()
+
+    ax.legend(["No recent alerts", "Recent rain alert", "Recent wind alert"], fontsize=10)
+    ax.set_title('Hazardous Weather Conditions Map')
     fig.set_size_inches(8, 8)
     plt.savefig('test.png', bbox_inches='tight')
     return 0
@@ -266,29 +281,5 @@ def main():
 
     return 0
 
-#Alrighty now I just need to set up the coding framework for monitoring
-#Things I want ot monitor:
-    #Rain rate
-    #Wind speed (specifically 10-minute average gust?)
-
-#What will the program do?
-    #Initialize the mariadb connection
-    #Every X interval in time, it will pull the latest data from a station,
-    #then process the output into nice python objects (like an array or list)
-        #It needs to be able to handle the data not being completely up to date
-        #Meaning, don't do anything if the latest data is not within the last 10 minutes from current time
-    #then it will run code to determine if an alert needs to be sent out
-    
-    #If true, send emails to everyone in email list (need to configure a subscribe AND unsibscribe button)
-    #Add the alert to another MariaDB database we'll call alerts.
-    #This will have a column for "station" and a column for alert type
-    #Make sure it checks to see if an alert has already been sent out, you don't want to spam people's emails!
-    #If false, do nothing!
-    #Wait X time has past and repeat.
-
-    #Additionally, it would be nice to include some error handling
-    #But that's something extra we want to try to implement later.
-
 if __name__== "__main__":
     main()
-
