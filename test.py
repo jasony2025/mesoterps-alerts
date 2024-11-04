@@ -97,38 +97,85 @@ plt.savefig('test.png', bbox_inches='tight')
 
 
 
+
+k = 0
+if True in rain and True not in wind:
+    k = 0
+elif True in wind and True not in rain:
+    k = 1
+elif True in rain and True in wind:
+    k = 2
+
+
 port = 465
-password = "zgdf emij huka kkgf"
+password = "khtb zmtx npmm zqkq"
 context = ssl.create_default_context()
-sender_email = "allurations@gmail.com"
+sender_email = "umdmicronetalerts@gmail.com"
 receiver_email = ["sirswagger21@gmail.com", "Jasony2025@gmail.com"]
 
-subject = "Rain Alert: Exercise Caution"
+subjectMessages = ["Rain Alert: Exercise Caution", "Wind Alert: Exercise Caution", "Rain and Wind Alert: Exercise Caution"]
+subject = subjectMessages[k]
 
 message = EmailMessage()
 message['Subject'] = subject
-message['From'] = sender_email
+message['From'] = "UMD Micronet Alerts umdmicronetalerts@gmail.com"
 message['To'] = ", ".join(receiver_email)
 message.set_content("")
 
+bodyMessages = [
+        """\
+        <html>
+            <body>
+                <p style="font-size:18px;">
+                Hello, <br> <br>
+                The UMD campus is currently experiencing heavy rain. This could lead to flash flooding. Please exercise caution if going outside. <br> <br>
+                Sincerely, <br>
+                Mesoterps
+                </p>
+                <p style="font-size:9px;">
+                DISCLAIMER: This is an UNOFFICIAL alert from students at the Department of Atmospheric and Oceanic Science. For official guidance, please consult the National Weather Service.
+                </p>
+                <img src="cid:{image_cid}">
+            </body>
+        </html>
+        """,
+        """\
+        <html>
+            <body>
+                <p style="font-size:18px;">
+                Hello, <br> <br>
+                The UMD campus is currently experiencing strong winds. This could lead to downed trees and wind damages. Please exercise caution if going outside. <br> <br>
+                Sincerely, <br>
+                Mesoterps
+                </p>
+                <p style="font-size:9px;">
+                DISCLAIMER: This is an UNOFFICIAL alert from students at the Department of Atmospheric and Oceanic Science. For official guidance, please consult the National Weather Service.
+                </p>
+                <img src="cid:{image_cid}">
+            </body>
+        </html>
+        """,
+        """\
+        <html>
+            <body>
+                <p style="font-size:18px;">
+                Hello, <br> <br>
+                The UMD campus is currently experiencing heavy rain and strong winds. This could lead to flash flooding, wind damages, and very low visibility. Please exercise caution if going outside. <br> <br>
+                Sincerely, <br>
+                Mesoterps
+                </p>
+                <p style="font-size:9px;">
+                DISCLAIMER: This is an UNOFFICIAL alert from students at the Department of Atmospheric and Oceanic Science. For official guidance, please consult the National Weather Service.
+                </p>
+                <img src="cid:{image_cid}">
+            </body>
+        </html>
+        """
+    ]
+
 image_cid = make_msgid(domain='weather.umd.edu')
 message.add_alternative(
-"""\
-<html>
-    <body>
-        <p style="font-size:18px;">
-        Hello, <br> <br>
-        The UMD campus is experiencing heavy rain. This could lead to flash flooding. Please exercise caution if going outside. <br> <br>
-        Sincerely, <br>
-        Mesoterps
-        </p>
-        <p style="font-size:9px;">
-        DISCLAIMER: This is an UNOFFICIAL alert from students at the Department of Atmospheric and Oceanic Science. For official guidance, please consult the National Weather Service.
-        </p>
-        <img src="cid:{image_cid}">
-    </body>
-</html>
-""".format(image_cid=image_cid[1:-1]), subtype='html')
+bodyMessages[k].format(image_cid=image_cid[1:-1]), subtype='html')
 with open('test.png', 'rb') as img:
     maintype, subtype = mimetypes.guess_type(img.name)[0].split('/')
     message.get_payload()[1].add_related(img.read(), maintype=maintype, subtype=subtype, cid=image_cid)
