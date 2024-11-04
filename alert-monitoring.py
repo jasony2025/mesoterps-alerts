@@ -21,7 +21,6 @@ import matplotlib.image as mpimg
 from matplotlib.patches import Circle
 
 
-
 #Flags to check for common errors
 SUCCESS = 0 #Data was queried from the MariaDB database as normal
 NO_RECENT_DATA = 1 #Data was queried successfully, but isn't within 10 minutes from present
@@ -47,7 +46,7 @@ def monitor_station(station_name, return_dict):
     conn = mariadb.connect(
         user="jyoum",
         password="password",
-        host="brewer.atmos.umd.edu",
+        host="mesonet2.umd.edu",
         database=station_name)
     conn.autocommit = False   
     cur = conn.cursor()
@@ -69,9 +68,9 @@ def monitor_station(station_name, return_dict):
         windGust.pop(0)
         windGust.append(line[2])
         rainAlert.pop(0)
-        rainAlert.append(False)
+        rainAlert.append(checkRain(rainRate))
         windAlert.pop(0)
-        windAlert.append(False)
+        windAlert.append(checkWind(windGust))
     conn.close()
 
     print('{} Rain Rate Alert: {}'.format(station_name, checkRain(rainRate)))
@@ -83,8 +82,8 @@ def createGraphic(rain, wind):
     fig, ax = plt.subplots()
     ax.patch.set_alpha(0)
 
-    rain = [True, True, False, True, False]
-    wind = [False, False, False, True, True]
+    # rain = [True, True, False, True, False]
+    # wind = [False, False, False, True, True]
     img = mpimg.imread('cmcm.jpg')
     imgplot = ax.imshow(img)
     rainPicture = mpimg.imread('rainNew3.png')
@@ -163,17 +162,17 @@ def generateEmail(rain, wind):
         return 0
     
     port = 465
-    password = "zgdf emij huka kkgf"
+    password = "khtb zmtx npmm zqkq" # need to change this using the mesoterps gmail
     context = ssl.create_default_context()
-    sender_email = "allurations@gmail.com"
-    receiver_email = ["sirswagger21@gmail.com", "Jasony2025@gmail.com"]
+    sender_email = "umdmicronetalerts@gmail.com"
+    receiver_email = ["sirswagger21@gmail.com", "Jasony2025@gmail.com", "mmaas@terpmail.umd.edu", "aw01867@terpmail.umd.edu"]
 
     subjectMessages = ["Rain Alert: Exercise Caution", "Wind Alert: Exercise Caution", "Rain and Wind Alert: Exercise Caution"]
     subject = subjectMessages[k]
 
     message = EmailMessage()
     message['Subject'] = subject
-    message['From'] = sender_email
+    message['From'] = "UMD Micronet Alerts umdmicronetalerts@gmail.com"
     message['To'] = ", ".join(receiver_email)
     message.set_content("")
 
