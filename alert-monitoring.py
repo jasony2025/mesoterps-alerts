@@ -14,7 +14,6 @@ from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid
 import mimetypes
 from datetime import datetime
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -85,11 +84,10 @@ def createGraphic(rain, wind):
     # rain = [True, True, False, True, False]
     # wind = [False, False, False, True, True]
     img = mpimg.imread('cmcm.jpg')
-    imgplot = ax.imshow(img)
-    rainPicture = mpimg.imread('rainNew3.png')
-    windPicture = mpimg.imread('windNew.png')
-    neutralPicture = mpimg.imread('neutralNew6.png')
-    bothPicture = mpimg.imread('bothNew.png')
+    rainPicture = mpimg.imread('rainFINAL.png')
+    windPicture = mpimg.imread('windFINAL.png')
+    neutralPicture = mpimg.imread('noneFINAL.png')
+    bothPicture = mpimg.imread('rainwindFINAL.png')
     
 
     # ax.add_patch(plt.Circle((0, 0), 0, color='springgreen'))
@@ -162,7 +160,7 @@ def generateEmail(rain, wind):
         return 0
     
     port = 465
-    password = "khtb zmtx npmm zqkq" # need to change this using the mesoterps gmail
+    password = "khtb zmtx npmm zqkq"
     context = ssl.create_default_context()
     sender_email = "umdmicronetalerts@gmail.com"
     receiver_email = ["sirswagger21@gmail.com", "Jasony2025@gmail.com", "mmaas@terpmail.umd.edu", "aw01867@terpmail.umd.edu"]
@@ -268,8 +266,8 @@ def main():
             rainArray.append(rain)
             windArray.append(wind)
 
-        createGraphic(rain, wind)
-        generateEmail(rain, wind)
+        createGraphic(rainArray, windArray)
+        generateEmail(rainArray, windArray)
 
             
 
